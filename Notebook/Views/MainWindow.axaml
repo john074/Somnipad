@@ -1,0 +1,91 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:notebook="using:Notebook"
+        x:Class="Notebook.Views.MainWindow"
+        Width="900"
+        Height="600"
+        Title="Блокнот">
+
+    <!-- Разворот книги -->
+    <Grid ColumnDefinitions="*,*" Margin="20">
+        
+        <!-- Левая страница -->
+        <Border Grid.Column="0"
+                Padding="10"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                Name="L">
+            
+            <Grid>
+                <notebook:LineEditorControl Name="PgL"/>
+                
+                <Label Content="5" 
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Bottom" 
+                       Margin="0,0,0,5" 
+                       Foreground="Gray"
+                       FontSize="14" 
+                       Name="PgNumL"
+                       Padding="10,0"
+                       IsHitTestVisible="False"/>
+                
+                <!-- Область для перехода -->
+                <Border Height="20"
+                        VerticalAlignment="Bottom"
+                        Background="Transparent"
+                        Cursor="Hand"
+                        Name="LeftPageClickArea"
+                        PointerPressed="OnLeftPageClick">
+                    <Border.Styles>
+                        <Style Selector="Border">
+                            <Setter Property="Background" Value="Transparent"/>
+                        </Style>
+                        <Style Selector="Border:pointerover">
+                            <Setter Property="Background" Value="#10000000"/>
+                        </Style>
+                    </Border.Styles>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Правая страница -->
+        <Border Grid.Column="1"
+                Padding="10"
+                BorderBrush="Gray"
+                BorderThickness="1" 
+                Name="R">
+            
+            <Grid>
+                <notebook:LineEditorControl Name="PgR"/>
+                
+                <Label Content="5" 
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Bottom" 
+                       Margin="0,0,0,5" 
+                       Foreground="Gray"
+                       FontSize="14" 
+                       Name="PgNumR"
+                       Padding="10,0"
+                       IsHitTestVisible="False"/>
+                
+                <!-- Область для перехода -->
+                <Border Height="20"
+                        VerticalAlignment="Bottom"
+                        Background="Transparent"
+                        Cursor="Hand"
+                        Name="RightPageClickArea"
+                        PointerPressed="OnRightPageClick">
+                    <Border.Styles>
+                        <Style Selector="Border">
+                            <Setter Property="Background" Value="Transparent"/>
+                        </Style>
+                        <Style Selector="Border:pointerover">
+                            <Setter Property="Background" Value="#10000000"/>
+                        </Style>
+                    </Border.Styles>
+                </Border>
+            </Grid>
+        </Border>
+                
+    </Grid>
+</Window>

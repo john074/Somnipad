@@ -1,0 +1,31 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Notebook.LineEditorControl">
+          <!-- Cтраница -->
+
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,
+                                   Auto,Auto,Auto,Auto,Auto,
+                                   Auto,Auto,Auto,Auto,Auto,
+                                   Auto">
+                <TextBox Grid.Row="0" Name="_0" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="1" Name="_1" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="2" Name="_2" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="3" Name="_3" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="4" Name="_4" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="5" Name="_5" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="6" Name="_6" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="7" Name="_7" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="8" Name="_8" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="9" Name="_9" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="10" Name="_10" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="11" Name="_11" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="12" Name="_12" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="13" Name="_13" TextChanged="OnTextChanged"/>
+                <TextBox Grid.Row="14" Name="_14" TextChanged="OnTextChanged"/>
+
+            </Grid>
+
+</UserControl>

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Notebook.Desktop/Notebook.Desktop.csproj" />
+  <Project Path="Notebook/Notebook.csproj" />
+</Solution>
