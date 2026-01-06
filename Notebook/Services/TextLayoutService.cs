@@ -1,5 +1,8 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Media;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 
 namespace Notebook.Services
@@ -15,16 +18,21 @@ namespace Notebook.Services
             if (formatted.Width <= current.Bounds.Width - 20)
                 return;
 
+            var next = container.FindNameScope()?.Find<TextBox>($"_{index + 1}");
+            if (next == null)
+            {
+                current.Undo();
+                return;
+            }
+
             string text = current.Text;
             current.Text = text[..^1];
 
-            var next = container.FindNameScope()?.Find<TextBox>($"_{index + 1}");
-            if (next == null)
-                return;
-
             next.Text = text[^1] + next.Text;
-            next.CaretIndex = next.Text.Length;
-            next.Focus();
+            if (current.CaretIndex == current.Text.Length)
+            {
+                next.Focus();
+            }
         }
 
         public static void HandleUnderflow(LineEditorControl container, TextBox current, int index)
@@ -33,10 +41,26 @@ namespace Notebook.Services
                 return;
 
             var prev = container.FindNameScope()?.Find<TextBox>($"_{index - 1}");
-            if (string.IsNullOrEmpty(prev?.Text))
+            if (prev == null)
+                return;
+
+            if (string.IsNullOrEmpty(prev.Text) || string.IsNullOrEmpty(current.Text))
             {
-                prev?.CaretIndex = 0;
-                prev?.Focus();
+                var num = Convert.ToInt32(current.Name[1..]);
+
+                if (string.IsNullOrEmpty(current.Text))
+                    num++;
+
+                for (int i = num; i <= 14; i++)
+                {
+                    var lower = container.FindNameScope()?.Find<TextBox>($"_{i}");
+                    var upper = container.FindNameScope()?.Find<TextBox>($"_{i - 1}");
+
+                    upper.Text = lower.Text;
+                }
+
+                prev.CaretIndex = 0;
+                prev.Focus();
                 return;
             }
 
@@ -59,6 +83,70 @@ namespace Notebook.Services
                 {
                     current.Text = string.Empty;
                 }
+            }
+        }
+
+        public static List<string> Paste(List<string> currentLines, int startLine, int startIndex, string pastedText, int maxLines)
+        {
+            var pasteLines = pastedText.Replace("\r", "").Trim().Split('\n');
+
+            var firstLine = currentLines[startLine];
+            var head = firstLine[..startIndex];
+            var tail = firstLine[startIndex..];
+
+            currentLines[startLine] = head + pasteLines[0];
+
+            int lineIndex = startLine + 1;
+
+            for (int i = 1; i < pasteLines.Length && lineIndex < maxLines; i++)
+            {
+                currentLines.Insert(lineIndex, pasteLines[i]);
+                lineIndex++;
+            }
+
+            if (lineIndex - 1 < maxLines)
+                currentLines[lineIndex - 1] += tail;
+
+            return currentLines.Take(maxLines).ToList();
+        }
+
+        public static void NewLine(LineEditorControl container)
+        {
+            var vb = (TextBox)TopLevel.GetTopLevel(container).FocusManager.GetFocusedElement();
+            int num = Convert.ToInt32(vb.Name[1..]);
+            if (num == 14)
+                return;
+
+            int free_line = -1;
+            for (int i = num + 1; i <= 14; i++)
+            {
+                var _vb = container.FindNameScope()?.Find<TextBox>($"_{i}");
+                if (string.IsNullOrEmpty(_vb.Text))
+                {
+                    free_line = i;
+                    break;
+                }
+            }
+
+            if (free_line > 0)
+            {
+                var text = vb.Text;
+                var cur = vb.CaretIndex;
+                for (int i = free_line; i > num; i--)
+                {
+                    var lower = container.FindNameScope()?.Find<TextBox>($"_{i}");
+                    var upper = container.FindNameScope()?.Find<TextBox>($"_{i-1}");
+
+                    lower.Text = upper.Text;
+
+                    if (i == num + 1)
+                    {
+                        lower.Text = text[cur..];
+                        lower.Focus();
+                    }
+                }
+
+                vb.Text = text[..cur];
             }
         }
 
