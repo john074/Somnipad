@@ -35,6 +35,11 @@ public partial class MainWindow : Window
             SavePages();
             e.Handled = true;
         }
+        else if (e.Key == Key.O && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            SettingsWindow settingsWindow = new SettingsWindow();
+            settingsWindow.ShowDialog(this);
+        }
     }
 
     private void SavePages()

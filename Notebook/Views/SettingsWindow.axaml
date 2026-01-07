@@ -2,8 +2,23 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="150"
         x:Class="Notebook.SettingsWindow"
-        Title="SettingsWindow">
-  Welcome to Avalonia!
+        Title="Settings"
+        Width="300"
+        Height="150">
+    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto, Auto">
+          <Label Grid.Column="0" Grid.Row="0" Margin="40">Theme:</Label>
+          <ComboBox Grid.Column="1" Grid.Row="0" Name="ThemeCb"
+                    Width="150" Margin="-30, 35" SelectedIndex="1">
+            <ComboBoxItem>Follow system</ComboBoxItem>
+            <ComboBoxItem>Papyrus</ComboBoxItem>
+            <ComboBoxItem>Light</ComboBoxItem>
+            <ComboBoxItem>Dark</ComboBoxItem>
+          </ComboBox>
+
+          <Label Grid.Column="0" Grid.Row="1" Margin="20, 0">Draw lines:</Label>
+          <CheckBox Grid.Column="1" Grid.Row="1" Name="DrawLinesCb"
+                    Margin="35, -10" IsChecked="True"></CheckBox>
+    </Grid>
 </Window>

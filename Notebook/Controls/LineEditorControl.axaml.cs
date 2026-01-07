@@ -1,25 +1,27 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Input;
 using Notebook.Data.Models;
 using Notebook.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Reflection;
 using static Notebook.Services.TextLayoutService;
 
 namespace Notebook;
 
 public partial class LineEditorControl : UserControl
 {
+    bool SELECTING = false;
+    (int line, int caret) selStart = (0, 0);
+    (int line, int caret) selEnd = (0, 0);
     public LineEditorControl()
     {
         InitializeComponent();
+        AddHandler(PointerPressedEvent, _OnPointerClick, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         for (int i = 0; i <= 14; i++)
         {
-            var tb = this.FindNameScope()?.Find<TextBox>($"_{i}");
+            var tb = FindTextBox(i);
             tb.AddHandler(KeyDownEvent, _OnKeyDown, Avalonia.Interactivity.RoutingStrategies.Tunnel);
-            AddHandler(PointerPressedEvent, _OnPointerClick, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         }
     }
 
@@ -33,18 +35,18 @@ public partial class LineEditorControl : UserControl
     }
 
     public Page GetPage(int pageNumber)
-    {   
+    {
         string text = string.Empty;
         for (int i = 0; i <= 14; i++)
         {
-            var tb = this.FindNameScope()?.Find<TextBox>($"_{i}");
+            var tb = FindTextBox(i);
             if (!string.IsNullOrEmpty(tb.Text))
                 text += tb.Text + "\n";
-            else 
+            else
                 text += "\n";
         }
 
-        return new Page() { PageNumber = pageNumber, Content = text }; 
+        return new Page() { PageNumber = pageNumber, Content = text };
     }
 
     public void LoadPage(Page page)
@@ -57,7 +59,7 @@ public partial class LineEditorControl : UserControl
 
         for (int i = 0; i <= 14; i++)
         {
-            var tb = this.FindNameScope()?.Find<TextBox>($"_{i}");
+            var tb = FindTextBox(i);
             tb.Text = lines[i];
         }
     }
@@ -66,36 +68,77 @@ public partial class LineEditorControl : UserControl
     {
         for (int i = 0; i <= 14; i++)
         {
-            var vb = this.FindNameScope()?.Find<TextBox>($"_{i}");
+            var vb = FindTextBox(i);
             vb.SelectAll();
         }
     }
 
-    public void Select(TextBox target)
+    public void Select(TextBox target, bool Up)
     {
-        var selections = new List<(int, int)>();
-        for (int i = 0; i <= 14; i++)
+        if (target == null)
+            return;
+
+        var carretIndex = GetFocusedTextBox().CaretIndex;
+        var txtLen = (target.Text ?? string.Empty).Length;
+        if (!SELECTING)
         {
-            var vb = this.FindNameScope()?.Find<TextBox>($"_{i}");
-            selections.Add((vb.SelectionStart, vb.SelectionEnd));
+            SELECTING = true;
+            selStart = (GetTextBoxIndex(GetFocusedTextBox()), carretIndex);
+            selEnd = (GetTextBoxIndex(GetFocusedTextBox()), carretIndex);
         }
+
+        selEnd = (GetTextBoxIndex(target), Math.Min(txtLen, carretIndex));
 
         target.Focus();
-        for (int i = 0; i <= 14; i++)
+        target.CaretIndex = Math.Min(txtLen, carretIndex);
+
+        (int line, int caret) logicalStart;
+        (int line, int caret) logicalEnd;
+
+        if (selStart.line < selEnd.line || (selStart.line == selEnd.line && selStart.caret <= selEnd.caret))
         {
-            var vb = this.FindNameScope()?.Find<TextBox>($"_{i}");
-            vb.SelectionStart = selections[i].Item1;
-            vb.SelectionEnd = selections[i].Item2;
+            logicalStart = selStart;
+            logicalEnd = selEnd;
+        }
+        else
+        {
+            logicalStart = selEnd;
+            logicalEnd = selStart;
         }
 
-        target.SelectionStart = 0;
+        for (int i = logicalStart.line; i <= logicalEnd.line; i++)
+        {
+            var vb = FindTextBox(i);
+            var len = (vb.Text ?? string.Empty).Length;
+
+            if (logicalStart.line == logicalEnd.line)
+            {
+                vb.SelectionStart = logicalStart.caret;
+                vb.SelectionEnd = logicalEnd.caret;
+            }
+            else if (i == logicalStart.line)
+            {
+                vb.SelectionStart = logicalStart.caret;
+                vb.SelectionEnd = len;
+            }
+            else if (i == logicalEnd.line)
+            {
+                vb.SelectionStart = 0;
+                vb.SelectionEnd = logicalEnd.caret;
+            }
+            else
+            {
+                vb.SelectionStart = 0;
+                vb.SelectionEnd = len;
+            }
+        }
     }
 
     public void UnselectAll()
     {
         for (int i = 0; i <= 14; i++)
         {
-            var vb = this.FindNameScope()?.Find<TextBox>($"_{i}");
+            var vb = FindTextBox(i);
             vb.ClearSelection();
         }
     }
@@ -104,7 +147,7 @@ public partial class LineEditorControl : UserControl
     {
         for (int i = 0; i <= 14; i++)
         {
-            var vb = this.FindNameScope()?.Find<TextBox>($"_{i}");
+            var vb = FindTextBox(i);
 
             if (vb.SelectionEnd < vb.SelectionStart)
             {
@@ -129,7 +172,7 @@ public partial class LineEditorControl : UserControl
             {
                 txt += vb.SelectedText + "\n";
             }
-            TopLevel.GetTopLevel(this).Clipboard.SetTextAsync(txt);
+            TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(txt);
         }
     }
 
@@ -143,12 +186,14 @@ public partial class LineEditorControl : UserControl
         if (string.IsNullOrEmpty(text))
             return;
 
-        var focused = (TextBox)TopLevel.GetTopLevel(this)?.FocusManager.GetFocusedElement();
+        var focused = GetFocusedTextBox();
 
         if (focused == null)
             return;
 
-        int startLine = Convert.ToInt32(focused.Name[1..]);
+        DeleteSelection();
+
+        int startLine = GetTextBoxIndex(focused);
         int caret = focused.CaretIndex;
 
         var currentLines = GetPage(-1).Content.Split('\n').ToList();
@@ -157,80 +202,58 @@ public partial class LineEditorControl : UserControl
         LoadPage(new Page() { Content = string.Join('\n', newLines) });
     }
 
-
     private void _OnKeyDown(object? sender, KeyEventArgs e)
     {
+        if (sender is not TextBox textBox) return;
+
+        var index = GetTextBoxIndex(textBox);
+        var caretIndex = textBox.CaretIndex;
+        var hasShift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+        var hasCtrl = e.KeyModifiers.HasFlag(KeyModifiers.Control);
+
         switch (e.Key)
         {
             case Key.Back:
                 DeleteSelection();
-                HandleUnderflow(this, (TextBox)sender, Convert.ToInt32(((TextBox)sender).Name[1..]));
+                HandleUnderflow(this, textBox, index);
                 break;
 
             case Key.Down:
-                var next = this.FindNameScope()?.Find<TextBox>($"_{Convert.ToInt32(((TextBox)sender).Name[1..]) + 1}");
-                if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
-                {
-                    Select(next);
-                    e.Handled = true;
-                }
-                else
-                {
-                    if (next == null)
-                    {
-                        var lookFor = Name == "PgL" ? "PgR" : "PgL";
-                        var pg = Parent.FindNameScope()?.Find<LineEditorControl>(lookFor);
-                        next = pg.FindNameScope()?.Find<TextBox>($"_0");
-                    }
-                    next?.Focus();
-                }
+                HandleArrowUpDown(textBox, index, caretIndex, hasShift, false);
+                e.Handled = true;
                 break;
 
             case Key.Up:
-                var prev = this.FindNameScope()?.Find<TextBox>($"_{Convert.ToInt32(((TextBox)sender).Name[1..]) - 1}");
-                if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
-                {
-                    Select(prev);
-                    e.Handled = true;
-                }
-                else
-                {
-                    if (prev == null)
-                    {
-                        var lookFor = Name == "PgL" ? "PgR" : "PgL";
-                        var pg = Parent.FindNameScope()?.Find<LineEditorControl>(lookFor);
-                        prev = pg.FindNameScope()?.Find<TextBox>($"_14");
-                    }
-                    prev?.Focus();
-                }
+                HandleArrowUpDown(textBox, index, caretIndex, hasShift, true);
+                e.Handled = true;
                 break;
 
-            case Key.A:
-                if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
-                {
-                    SelectAll();
-                    e.Handled = true;
-                }
+            case Key.Left when hasShift:
+                MarkSelection(index, caretIndex);
                 break;
 
-            case Key.C:
-                if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
-                {
-                    CopySelected();
-                    e.Handled = true;
-                }
+            case Key.Right when hasShift:
+                MarkSelection(index, caretIndex);
                 break;
 
-            case Key.V:
-                if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
-                {
-                    Paste();
-                    e.Handled = true;
-                }
+            case Key.A when hasCtrl:
+                SelectAll();
+                e.Handled = true;
+                break;
+
+            case Key.C when hasCtrl:
+                CopySelected();
+                e.Handled = true;
+                break;
+
+            case Key.V when hasCtrl:
+                Paste();
+                e.Handled = true;
                 break;
 
             case Key.Escape:
                 UnselectAll();
+                SELECTING = false;
                 e.Handled = true;
                 break;
 
@@ -241,9 +264,66 @@ public partial class LineEditorControl : UserControl
         }
     }
 
+    private int GetTextBoxIndex(TextBox textBox) => Convert.ToInt32(textBox.Name[1..]);
+
+    private TextBox? FindTextBox(int index) => this.FindNameScope()?.Find<TextBox>($"_{index}");
+
+    private TextBox? GetFocusedTextBox() => TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as TextBox;
+
+    private LineEditorControl? FindOtherPage()
+    {
+        var otherPageName = Name == "PgL" ? "PgR" : "PgL";
+        return Parent?.FindNameScope()?.Find<LineEditorControl>(otherPageName);
+    }
+
+    private void FocusTextBox(TextBox? textBox, int caretIndex)
+    {
+        textBox?.Focus();
+        textBox?.CaretIndex = caretIndex;
+    }
+
+    private void MarkSelection(int index, int caretIndex)
+    {
+        if (!SELECTING)
+        {
+            SELECTING = true;
+            selStart = (index, caretIndex);
+        }
+        else
+        {
+            selEnd = (index, caretIndex);
+        }
+    }
+
+    private void HandleArrowUpDown(TextBox textBox, int index, int caretIndex, bool hasShift, bool isUp)
+    {
+        var nextIndex = isUp ? index - 1 : index + 1;
+        var nextPageStart = isUp ? 14 : 0;
+
+        var nextTextBox = FindTextBox(nextIndex);
+
+        if (nextTextBox == null)
+        {
+            var otherPage = FindOtherPage();
+            nextTextBox = otherPage?.FindTextBox(nextPageStart);
+        }
+
+        if (hasShift)
+        {
+            Select(nextTextBox, isUp);
+            Console.WriteLine(selEnd);
+            return;
+        }
+
+        FocusTextBox(nextTextBox, caretIndex);
+    }
+
     private void _OnPointerClick(object? sender, PointerPressedEventArgs e)
     {
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
             UnselectAll();
+            SELECTING = false;
+        }
     }
 }
