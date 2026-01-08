@@ -57,6 +57,8 @@ namespace Notebook.Services
                     var upper = container.FindNameScope()?.Find<TextBox>($"_{i - 1}");
 
                     upper.Text = lower.Text;
+                    if (i == 14)
+                        lower.Text = string.Empty;
                 }
 
                 prev.CaretIndex = 0;
@@ -117,37 +119,33 @@ namespace Notebook.Services
             if (num == 14)
                 return;
 
-            int free_line = -1;
-            for (int i = num + 1; i <= 14; i++)
-            {
-                var _vb = container.FindNameScope()?.Find<TextBox>($"_{i}");
-                if (string.IsNullOrEmpty(_vb.Text))
-                {
-                    free_line = i;
-                    break;
-                }
-            }
+            var text = vb.Text;
+            var cur = vb.CaretIndex;
+            var MoveOccured = false;
 
-            if (free_line > 0)
+            for (int i = 14; i > num; i--)
             {
-                var text = vb.Text;
-                var cur = vb.CaretIndex;
-                for (int i = free_line; i > num; i--)
-                {
-                    var lower = container.FindNameScope()?.Find<TextBox>($"_{i}");
-                    var upper = container.FindNameScope()?.Find<TextBox>($"_{i-1}");
+                var lower = container.FindNameScope()?.Find<TextBox>($"_{i}");
+                var upper = container.FindNameScope()?.Find<TextBox>($"_{i - 1}");
 
+                if (string.IsNullOrEmpty(lower.Text))
+                {
                     lower.Text = upper.Text;
-
-                    if (i == num + 1)
-                    {
-                        lower.Text = text[cur..];
-                        lower.Focus();
-                    }
+                    upper.Text = string.Empty;
+                    MoveOccured = true;
                 }
+                else
+                    continue;
 
-                vb.Text = text[..cur];
+                if (i == num + 1)
+                {
+                    lower.Text = text[cur..];
+                    lower.Focus();
+                }
             }
+
+            if (MoveOccured)
+                vb.Text = text[..cur];
         }
 
         private static FormattedText GetFormattedText(TextBox current)

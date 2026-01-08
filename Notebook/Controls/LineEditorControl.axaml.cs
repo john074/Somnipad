@@ -4,7 +4,6 @@ using Notebook.Data.Models;
 using Notebook.Services;
 using System;
 using System.Linq;
-using System.Reflection;
 using static Notebook.Services.TextLayoutService;
 
 namespace Notebook;
@@ -73,7 +72,7 @@ public partial class LineEditorControl : UserControl
         }
     }
 
-    public void Select(TextBox target, bool Up)
+    public void Select(TextBox target)
     {
         if (target == null)
             return;
@@ -141,6 +140,10 @@ public partial class LineEditorControl : UserControl
             var vb = FindTextBox(i);
             vb.ClearSelection();
         }
+
+        SELECTING = false;
+        selStart = (0, 0);
+        selEnd = (0, 0);
     }
 
     public void DeleteSelection()
@@ -219,12 +222,12 @@ public partial class LineEditorControl : UserControl
                 break;
 
             case Key.Down:
-                HandleArrowUpDown(textBox, index, caretIndex, hasShift, false);
+                HandleArrowUpDown(index, caretIndex, hasShift, false);
                 e.Handled = true;
                 break;
 
             case Key.Up:
-                HandleArrowUpDown(textBox, index, caretIndex, hasShift, true);
+                HandleArrowUpDown(index, caretIndex, hasShift, true);
                 e.Handled = true;
                 break;
 
@@ -295,24 +298,25 @@ public partial class LineEditorControl : UserControl
         }
     }
 
-    private void HandleArrowUpDown(TextBox textBox, int index, int caretIndex, bool hasShift, bool isUp)
+    private void HandleArrowUpDown(int index, int caretIndex, bool hasShift, bool isUp)
     {
         var nextIndex = isUp ? index - 1 : index + 1;
         var nextPageStart = isUp ? 14 : 0;
 
         var nextTextBox = FindTextBox(nextIndex);
 
-        if (nextTextBox == null)
-        {
-            var otherPage = FindOtherPage();
-            nextTextBox = otherPage?.FindTextBox(nextPageStart);
-        }
-
         if (hasShift)
         {
-            Select(nextTextBox, isUp);
-            Console.WriteLine(selEnd);
+            if (nextTextBox != null)
+                Select(nextTextBox);
             return;
+        }
+
+        if (nextTextBox == null)
+        {   
+            var otherPage = FindOtherPage();
+            nextTextBox = otherPage?.FindTextBox(nextPageStart);
+            UnselectAll();
         }
 
         FocusTextBox(nextTextBox, caretIndex);
