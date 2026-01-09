@@ -1,10 +1,38 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Notebook.App"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Dark">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.Styles>
         <FluentTheme />
+        <Style Selector="Window">
+			<Setter Property="Background" Value="{DynamicResource BackgroundColor}"/>
+        </Style>
+
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="{DynamicResource BackgroundColor}"/>
+            <Setter Property="BorderThickness" Value="{DynamicResource TextBoxBorderThickness}" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+            <Setter Property="SelectionBrush" Value="{DynamicResource SelectionColor}"/>
+        </Style>
+
+        <Style Selector="TextBox:focus-within /template/ Border">
+            <Setter Property="Background" Value="{DynamicResource TransparentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+        </Style>
+
+        <Style Selector="TextBox:pointerover /template/ Border">
+          <Setter Property="Background" Value="{DynamicResource TransparentBrush}" />
+        </Style>
+
+        <Style Selector="Label">
+			<Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+        </Style>
+
     </Application.Styles>
+
+    <Application.Resources>
+        <x:Boolean x:Key="DrawLines">True</x:Boolean>
+    </Application.Resources>
 </Application>

@@ -4,7 +4,7 @@
         x:Class="Notebook.Views.MainWindow"
         Width="900"
         Height="600"
-        Title="Блокнот">
+        Title="Блокнот" CanResize="False">
 
     <!-- Разворот книги -->
     <Grid ColumnDefinitions="*,*" Margin="20">

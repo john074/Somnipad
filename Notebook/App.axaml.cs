@@ -13,7 +13,7 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
-        Repository = new NotebookRepository("C:\\Users\\mydog\\source\\repos\\Notebook\\Notebook\\Data\\DB\\notebook.db");
+        Repository = new NotebookRepository("notebook.db");
     }
 
     public override void OnFrameworkInitializationCompleted()

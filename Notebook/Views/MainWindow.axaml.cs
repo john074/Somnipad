@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
+using Notebook.ViewModels;
 using System;
 
 namespace Notebook.Views;
@@ -7,9 +8,11 @@ namespace Notebook.Views;
 public partial class MainWindow : Window
 {
     private int _leftPageNumber = 1;
+    private SettingsViewModel _settings;
     public MainWindow()
     {
         InitializeComponent();
+        _settings = new SettingsViewModel();
         LoadPages();
         AddHandler(KeyDownEvent, OnKeyDown, Avalonia.Interactivity.RoutingStrategies.Tunnel);
     }
@@ -37,7 +40,7 @@ public partial class MainWindow : Window
         }
         else if (e.Key == Key.O && e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
-            SettingsWindow settingsWindow = new SettingsWindow();
+            SettingsWindow settingsWindow = new SettingsWindow(_settings);
             settingsWindow.ShowDialog(this);
         }
     }

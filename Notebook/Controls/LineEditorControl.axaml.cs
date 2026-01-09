@@ -165,7 +165,7 @@ public partial class LineEditorControl : UserControl
         }
     }
 
-    public void CopySelected()
+    public async void CopySelected()
     {
         string txt = string.Empty;
         for (int i = 0; i <= 14; i++)
@@ -175,17 +175,21 @@ public partial class LineEditorControl : UserControl
             {
                 txt += vb.SelectedText + "\n";
             }
-            TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(txt);
+        }
+
+        if (!string.IsNullOrEmpty(txt))
+        {
+            await TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(txt);
         }
     }
 
-    public void Paste()
+    public async void Paste()
     {
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
         if (clipboard == null)
             return;
 
-        var text = clipboard.GetTextAsync().Result;
+        var text = await clipboard.GetTextAsync();
         if (string.IsNullOrEmpty(text))
             return;
 
@@ -196,8 +200,8 @@ public partial class LineEditorControl : UserControl
 
         DeleteSelection();
 
-        int startLine = GetTextBoxIndex(focused);
-        int caret = focused.CaretIndex;
+        var startLine = GetTextBoxIndex(focused);
+        var caret = focused.CaretIndex;
 
         var currentLines = GetPage(-1).Content.Split('\n').ToList();
         var newLines = TextLayoutService.Paste(currentLines, startLine, caret, text, 15);
