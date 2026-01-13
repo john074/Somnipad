@@ -9,22 +9,20 @@ namespace Notebook.ViewModels;
 
 public class SettingsViewModel : ViewModelBase
 {
-    private bool _drawLines = true;
-    private ThemeVariant _selectedTheme = ThemeVariant.Dark;
+    private bool _drawLines;
+    private ThemeVariant _selectedTheme;
 
     public SettingsViewModel()
     {
-        Application.Current!.Resources["TextBoxBorderThickness"] = new Thickness(1);
-        Application.Current!.Resources["BackgroundColor"] = Colors.Black;
-        Application.Current!.Resources["ForegroundColor"] = Colors.White;
-        Application.Current!.Resources["BorderColor"] = Colors.Red;
-        Application.Current!.Resources["SelectionColor"] = Colors.Red;
+        var settings = App.Repository.LoadSettings();
+        SelectedTheme = new ThemeVariant(settings.Theme, settings.BaseTheme == "Dark" ? ThemeVariant.Dark : ThemeVariant.Light);
+        DrawLines = settings.DarawingLines == 0 ? false : true;
     }
 
     public List<ThemeVariant> Themes { get; } =
     [
-        ThemeVariant.Light,
-        ThemeVariant.Dark,
+        new ThemeVariant("Light", ThemeVariant.Light),
+        new ThemeVariant("Dark", ThemeVariant.Dark),
         new ThemeVariant("Papyrus", ThemeVariant.Light),
         new ThemeVariant("Midnight", ThemeVariant.Dark),
         new ThemeVariant("Nord", ThemeVariant.Light),
@@ -46,6 +44,8 @@ public class SettingsViewModel : ViewModelBase
                 return;
 
             _drawLines = value;
+
+            App.Repository.SaveSettings(new Data.Models.Settings() { Theme = _selectedTheme.Key.ToString(), BaseTheme = _selectedTheme.InheritVariant.ToString(), DarawingLines = _drawLines ? 1 : 0 });
             OnPropertyChanged();
 
             Application.Current!.Resources["TextBoxBorderThickness"] = value ? new Thickness(1) : new Thickness(0);
@@ -150,6 +150,7 @@ public class SettingsViewModel : ViewModelBase
                     break;
             }
 
+            App.Repository.SaveSettings(new Data.Models.Settings() { Theme = _selectedTheme.Key.ToString(), BaseTheme =_selectedTheme.InheritVariant.ToString(), DarawingLines = _drawLines ? 1 : 0 });
             OnPropertyChanged();
         }
     }
